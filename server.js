@@ -318,8 +318,6 @@ const generateInvoiceId = async () => {
 
 /* ================== FRONTEND ================== */
 
-const frontendPath = path.join(__dirname, "../frontEnd");
-app.use(express.static(frontendPath));
 
 /* ================== PUBLIC API ROUTES ================== */
 // PUBLIC SETTINGS ENDPOINT
@@ -1732,15 +1730,11 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(frontendPath, "pos.html"));
 });
 
-app.get("/admin", (req, res) => {
-    console.log('🌐 Serving Admin interface');
-    res.sendFile(path.join(frontendPath, "admin.html"));
+app.get("/", (req, res) => {
+    res.send("✅ POS Backend is Running! (Access the App via your GitHub Pages URL)");
 });
 
-app.get("*", (req, res) => {
-    console.log('🌐 Serving POS interface (catch-all)');
-    res.sendFile(path.join(frontendPath, "pos.html"));
-});
+
 
 /* ================== ERROR HANDLING ================== */
 app.use((err, req, res, next) => {
@@ -1777,6 +1771,7 @@ setInterval(async () => {
 /* ================== START SERVER ================== */
 
 app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
     console.log(`🚀 POS server running at http://localhost:${PORT}`);
     console.log(`👨‍💼 Admin panel at http://localhost:${PORT}/admin`);
     console.log(`🐛 Debug endpoint at http://localhost:${PORT}/api/debug`);
