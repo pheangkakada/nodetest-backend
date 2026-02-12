@@ -1426,20 +1426,22 @@ app.put("/api/admin/users/:id", async (req, res) => {
         const { id } = req.params;
         console.log(`👨‍💼 /api/admin/users/${id}: Updating user`);
         
-        // Remove password from update if present
+        // Prepare update data
         const updateData = { ...req.body };
-        if (updateData.password) {
-            delete updateData.password;
+
+        // LOGIC: Only update password if a new one is typed. 
+        // If empty/null, delete it from updateData to keep the old PIN.
+        if (!updateData.password || updateData.password.trim() === "") {
+            delete updateData.password; 
         }
-        
+
         const user = await User.findByIdAndUpdate(
             id,
             updateData,
             { new: true, runValidators: true }
-        ).select("-password");
+        ).select("-password"); // Return user without showing the password
         
         if (!user) {
-            console.log(`❌ /api/admin/users/${id}: User not found`);
             return res.status(404).json({ error: "User not found" });
         }
         
