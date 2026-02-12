@@ -1725,10 +1725,7 @@ app.get("/api/test/menu", async (req, res) => {
 
 /* ================== SPA ROUTING ================== */
 
-app.get("/", (req, res) => {
-    console.log('🌐 Serving POS interface');
-    res.sendFile(path.join(frontendPath, "pos.html"));
-});
+
 
 app.get("/", (req, res) => {
     res.send("✅ POS Backend is Running! (Access the App via your GitHub Pages URL)");
