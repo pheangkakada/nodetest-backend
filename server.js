@@ -255,12 +255,27 @@ async function initializeData() {
     try {
         console.log('🔄 Initializing database...');
         
+        // --- 1. SAFE INDEX REMOVAL (Fixes the crash) ---
+        try {
+            // Attempt to drop the email index if it exists
+            await User.collection.dropIndex('email_1');
+            console.log("✅ SUCCESS: Dropped problematic 'email_1' index.");
+        } catch (error) {
+            // If error is "IndexNotFound", that's actually good! It means we are safe.
+            if (error.code === 27 || error.codeName === 'IndexNotFound') {
+                console.log("ℹ️ Note: 'email_1' index not found (system is clean).");
+            } else {
+                console.log("⚠️ Non-critical warning checking indexes:", error.message);
+            }
+        }
+        // ------------------------------------------------
+
         // Create default admin user if not exists
         const adminExists = await User.findOne({ username: 'admin' });
         if (!adminExists) {
             const adminUser = new User({
                 username: 'admin',
-                email: 'admin@restaurant.com',
+                // email: 'admin@restaurant.com', // Commented out to prevent unique constraints
                 password: 'admin123',
                 role: 'admin',
                 status: 'active'
@@ -269,8 +284,6 @@ async function initializeData() {
             console.log('✅ Default admin user created');
         }
 
-        // ⚠️ REMOVED: Auto-creation of default categories
-        // Categories should be created manually through the admin panel
         console.log('ℹ️ Categories will not be created automatically. Use admin panel to create categories.');
 
         // Check if we have any menu items
@@ -301,14 +314,7 @@ async function initializeData() {
         console.error('❌ Database initialization error:', error);
     }
 }
-User.collection.dropIndex('email_1', function(err, result) {
-    if (err) {
-        // It might error if the index doesn't exist, which is fine
-        console.log("Note: email_1 index not found or already dropped (this is good).");
-    } else {
-        console.log("✅ SUCCESS: Dropped problematic 'email_1' index.");
-    }
-});
+
 // Initialize data after connection
 mongoose.connection.once('open', () => {
     console.log('✅ MongoDB connected');
