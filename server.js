@@ -43,7 +43,7 @@ const authenticate = (req, res, next) => {
 };
 app.get('/api/users', async (req, res) => {
     try {
-        const users = await User.find().sort({ createdAt: -1 });
+        const users = await User.find().select("-password").sort({ createdAt: -1 });
         res.json(users);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -53,28 +53,39 @@ app.get('/api/users', async (req, res) => {
 // 2. CREATE NEW USER
 app.post('/api/users', async (req, res) => {
     try {
-        const { username, password, fullName, role } = req.body;
+        const { username, password, fullName, role, id } = req.body;
         
-        // Validation
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Username and PIN are required' });
+        if (id) {
+            // Update Existing
+            const updates = { username, fullName, role };
+            if (password) updates.password = password; // Only update PIN if provided
+            const user = await User.findByIdAndUpdate(id, updates, { new: true });
+            return res.json({ message: 'User updated', user });
+        } else {
+            // Create New
+            const existing = await User.findOne({ username });
+            if (existing) return res.status(400).json({ error: 'Operator ID already exists' });
+            
+            const newUser = new User({ username, password, fullName, role });
+            await newUser.save();
+            res.status(201).json({ message: 'User created', user: newUser });
         }
-        
-        // Check duplicates
-        const existing = await User.findOne({ username });
-        if (existing) {
-            return res.status(400).json({ error: 'Operator ID already exists' });
-        }
-
-        const newUser = new User({ username, password, fullName, role });
-        await newUser.save();
-        
-        res.status(201).json({ message: 'User created successfully', user: newUser });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
+// 3. RESET PASSWORD (PIN) ONLY
+app.put('/api/users/:id/reset-pin', async (req, res) => {
+    try {
+        const { newPin } = req.body;
+        if (!newPin || newPin.length !== 4) return res.status(400).json({ error: "PIN must be 4 digits" });
+        
+        await User.findByIdAndUpdate(req.params.id, { password: newPin });
+        res.json({ message: "Security PIN reset successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 // 3. DELETE USER
 app.delete('/api/users/:id', async (req, res) => {
     try {
