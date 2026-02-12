@@ -206,7 +206,7 @@ const MenuSchema = new mongoose.Schema({
 // User Schema
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // 4-digit PIN
+    password: { type: String, required: true }, 
     fullName: { type: String },
     role: { type: String, enum: ['admin', 'cashier', 'staff'], default: 'cashier' },
     createdAt: { type: Date, default: Date.now }
@@ -301,7 +301,14 @@ async function initializeData() {
         console.error('❌ Database initialization error:', error);
     }
 }
-
+User.collection.dropIndex('email_1', function(err, result) {
+    if (err) {
+        // It might error if the index doesn't exist, which is fine
+        console.log("Note: email_1 index not found or already dropped (this is good).");
+    } else {
+        console.log("✅ SUCCESS: Dropped problematic 'email_1' index.");
+    }
+});
 // Initialize data after connection
 mongoose.connection.once('open', () => {
     console.log('✅ MongoDB connected');
